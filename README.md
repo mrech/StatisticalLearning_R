@@ -6,5 +6,9 @@
 
 ### CONTENT
 - **Ch1 & Ch2 Introduction of Statistical Learning**
+   - Ch1_Introduction.pdf
+   - Ch2_StatisticalLearning.pdf
    - Introduction.R
 - **Ch3 Linear Regression**
+   - Ch3_LinearRegression.pdf
+   - Regression.R
