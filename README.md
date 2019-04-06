@@ -13,5 +13,8 @@
   - *CODE: LinearRegression.R*
 - **Ch4 Classification**
   - KEYWORDS: Intro Classification Problems | Logistic Regression | Multivariate Logistic Regression | Case-Control Sampling and Multiclass | Discriminant Analysis | Gaussian Discriminant Analysis | Quadratic Discriminant Analysis and Naive Bayes
-  - *CODE: LogisticRegression.R | LDA.R | KNN.R*
+  - *CODE: LogisticRegression.R - LDA.R - KNN.R*
+- **Ch5 Resampling Mehtods**
+  - KEYWORDS: Cross-validation | K-fold Cross-Validation | Bootstrap
+  - *CODE: CrossValidation.R - Bootstrap.R - 5ReviewQuestions.R*
   
