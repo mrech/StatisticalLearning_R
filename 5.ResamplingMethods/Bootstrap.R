@@ -1,5 +1,6 @@
 ## Bootstrap
 require(ISLR)
+
 ## Minimum risk investment - Section 5.2
 # Boostrap returns the sampling distribution of statistics
 # the sampling variability of alpha/Standard error of alpha
