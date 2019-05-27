@@ -1,0 +1,86 @@
+Model Selection
+====================
+
+```{r}
+library(ISLR)
+summary(Hitters)
+```
+
+Remove the missing values:
+```{r}
+Hitters=na.omit(Hitters)
+with(Hitters, sum(is.na(Salary)))
+```
+
+Best Subset regression
+------------------------
+With the package 'leaps' evaluate all the best-subset models.
+
+```{r}
+library(leaps)
+regfit.full=regsubsets(Salary~.,data=Hitters)
+summary(regfit.full)
+```
+It gives by default best-subsets up to size 8; let's include all the x variables 
+```{r}
+regfit.full=regsubsets(Salary~.,data=Hitters, nvmax = 19)
+reg.summary=summary(regfit.full)
+names(reg.summary)
+plot(reg.summary$cp, xlab = 'Number of Variables', ylab = 'Cp')
+which.min(reg.summary$cp)
+points(10,reg.summary$cp[10],pch=20,col='red')
+```
+Alternative plot
+```{r}
+plot(regfit.full, scale = 'Cp')
+coef(regfit.full,10)
+```
+
+Forward Stepwise Selection
+--------------------------
+```{r}
+regfit.fwd = regsubsets(Salary~.,data=Hitters, nvmax=19, method='forward')
+summary(regfit.fwd)
+plot(regfit.fwd, scale='Cp')
+```
+
+Model Selection Using a Validation Set
+--------------------------------------
+```{r}
+dim(Hitters)
+set.seed(1)
+# we select 2/3 for the training set
+train = sample(seq(263),180,replace = FALSE)
+regfit.fwd = regsubsets(Salary~.,data=Hitters[train,], nvmax = 19, method = 'forward')
+```
+
+Now we make predictions on the observations not used for training. 
+There are 19 models, so we set up some vectors to record the errors.
+```{r}
+val.errors=rep(NA, 19)
+x.test=model.matrix(Salary~.,data=Hitters[-train,])
+for(i in 1:19){
+  coefi=coef(regfit.fwd,id=i)
+  pred=x.test[,names(coefi)]%*%coefi # matrix multiplication
+  val.errors[i]=mean((Hitters$Salary[-train]-pred)^2)
+}
+plot(sqrt(val.errors), ylab='Root MSE', ylim=c(300,400),pch=19,type = 'b')
+# The residual sum of squares divided by the number of degrees of freedom
+points(sqrt(regfit.fwd$rss[-1]/180), col='blue', pch=19,type='b')
+legend('topright', legend=c('Training','Validation'), col=c('blue','black'),pch = 19)
+
+```
+As we expect, the training error goes down monotonically as the model gets bigger, 
+but not so for the validation error. 
+
+Create a function for making predictions with 'regsubsets'.
+```{r}
+predict.regsubsets=function(object, newdata, id, ...){
+  form=as.formula(object$call[[2]])
+  mat=model.matrix(form, newdata)
+  coefi = coef(object, id)
+  mat[,names(coefi)]%*%coefi
+}
+```
+
+
