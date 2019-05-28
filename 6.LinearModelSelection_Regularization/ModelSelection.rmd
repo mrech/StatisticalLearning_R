@@ -83,4 +83,67 @@ predict.regsubsets=function(object, newdata, id, ...){
 }
 ```
 
+Model Selection by Cross-Validation
+-----------------------------------
+
+Using 10-fold Cross-Validation
+```{r}
+set.seed(11)
+folds=sample(rep(1:10,length = nrow(Hitters)))
+# Check if we have balanced observations
+table(folds)
+# 10 rows for each folds and 19 columns for each subset of the predictors
+cv.errors = matrix(NA,10,19)
+for(k in 1:10){
+  best.fit=regsubsets(Salary~.,data = Hitters[folds!=k,],nvmax=19,method = 'forward')
+  for (i in 1:19){
+    pred=predict(best.fit,Hitters[folds==k,],id=i)
+    cv.errors[k,i]=mean((Hitters$Salary[folds==k]-pred)^2)
+  }
+}
+# average down the columns (mean errors for each folds)
+rmse.cv=sqrt(apply(cv.errors,2,mean))
+plot(rmse.cv,pch=19,type='b')
+```
+
+Ridge Regression and the Lasso
+------------------------------
+```{r}
+library(glmnet)
+x=model.matrix(Salary~.-1,data=Hitters)
+y=Hitters$Salary
+```
+
+Fit a ridge-regression model.
+This is achieved by calling 'glmnet' with 'alpha=0'.
+Using 'cv.glmnet' will do the cross-validation for us.
+```{r}
+fit.ridge = glmnet(x,y,alpha = 0)
+plot(fit.ridge,xvar='lambda',label=TRUE)
+cv.ridge = cv.glmnet(x,y,alpha=0)
+plot(cv.ridge)
+```
+
+Now we fit a lasso model.
+For this we use the default 'alpha=1'.
+```{r}
+fit.lasso=glmnet(x,y)
+plot(fit.lasso, xvar='lambda', label=TRUE)
+cv.lasso=cv.glmnet(x,y)
+plot(cv.lasso)
+coef(cv.lasso)
+```
+
+train/validation division to select the 'lambda' for the lasso. 
+```{r}
+lasso.tr=glmnet(x[train,],y[train])
+lasso.tr
+pred = predict(lasso.tr,x[-train,])
+dim(pred)
+rmse=sqrt(apply((y[-train]-pred)^2, 2, mean))
+plot(log(lasso.tr$lambda),rmse,type='b',xlab = 'Log(lambda)')
+lam.best=lasso.tr$lambda[order(rmse)[1]]
+lam.best
+coef(lasso.tr,s=lam.best)
+```
 
