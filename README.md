@@ -19,4 +19,7 @@
   - *CODE: CrossValidation.R - Bootstrap.R - 5ReviewQuestions.R*
 - **Ch6 Model Selection**
   - KEYWORDS: Subset Selection | Forward Stepwise Selection | Backward Stepwise Selection | Cp | AIC | BIC | Adjusted R^2 | Validation | Cross-Validation | Ridge regression | Lasso | Principal Components Regression | Partial Least Squares
-  - *ModelSelection.rmd*
+  - CODE: *ModelSelection.rmd*
+- **Ch7 Non Linearity**
+  - KEYWORDS: Polynimial Regression | Step Functions | Piecewise Polynimials | Linear Splines | Cubic Splines | Smoothing Splines | Local Regression | Generalized Additive Models 
+  - CODE: *NonlinearFunctions.Rmd*
