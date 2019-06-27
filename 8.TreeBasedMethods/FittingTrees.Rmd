@@ -1,0 +1,143 @@
+Decision Trees
+====================================================================
+
+We will have a look at the `Carseats` data using the `tree` package in R, as in the lab in the book. 
+We create a binary response variable `High` (for high sales), and we include it in 
+the same dataframe.
+
+```{r}
+require(ISLR)
+require(tree)
+attach(Carseats)
+hist(Sales)
+High = ifelse(Sales<=8,"No", "Yes")
+Carseats=data.frame(Carseats, High)
+```
+
+Now we fit a tree to these data, and summarize and plot it. Notice that we have to _exclude_ `Sales` from the right-hand side of the formula, because the resoponse is derived from it. 
+
+```{r}
+tree.carseats=tree(High~.-Sales, data=Carseats)
+summary(tree.carseats)
+plot(tree.carseats)
+text(tree.carseats, pretty = 0)
+```
+
+For a detailed summary of the tree, print it:
+```{r}
+tree.carseats
+```
+
+Lets create a training and test set (250,150) split of the 400 observations, grow the tree on the training set and evaluate its perforamnce on the test set. 
+
+```{r}
+set.seed(1011)
+train = sample(1:nrow(Carseats),250)
+tree.carseats = tree(High~.-Sales, Carseats, subset = train)
+plot(tree.carseats)
+text(tree.carseats, pretty = 0)
+tree.pred = predict(tree.carseats, Carseats[-train,], type='class') # predict the class label
+# Misclassification table
+with(Carseats[-train,], table(tree.pred, High))
+ErrorRate = (58+45)/150
+```
+
+This tree was grown to full depth, and might be too variable. We now use CV to prune it. 
+```{r}
+cv.carseats = cv.tree(tree.carseats, FUN = prune.misclass)
+cv.carseats
+plot(cv.carseats)
+prune.carseats = prune.misclass(tree.carseats, best=16)
+plot(prune.carseats)
+text(prune.carseats, pretty = 0)
+```
+
+Now lets evaluate this pruned tree on the test data. 
+
+```{r}
+tree.pred = predict(prune.carseats, Carseats[-train,], type="class")
+with(Carseats[-train,], table(tree.pred, High))
+(59+47)/150
+```
+
+Random Forests and Boosting
+======================================================
+
+These methods use trees as building blocks to build more complex models. Here we will use the Boston housing data to explore random forests and boosting. These data are in the `MASS` package.
+It gives housing values and other statistics in each of 506 suburbs of Boston based on a 1970 census. 
+
+Random Forests
+------------------------
+Random forests build lots of bushy trees, and then average them to reduce the variance. 
+
+```{r}
+require(randomForest)
+require(MASS)
+set.seed(101)
+dim(Boston)
+train=sample(1:nrow(Boston), 300)
+```
+
+Lets fit a random forest and see how it performs. We will use the response `medv`, the median housing value (in $1K)
+
+```{r}
+rf.boston=randomForest(medv~., data = Boston, subset=train)
+rf.boston
+```
+
+The MSR and % variance explained are based on OOB or _out-of-bag_ estimates, a very clever device in random forests to get honest error estimates. The model reports that `mtry=4`, which is the number of variables randomly chosen at each split. Since $p=13$ here, we could try all 13 possible values of `mtry`. We will do so, record the results, and make a plot. 
+
+```{r}
+# Initiate variables
+oob.err = double(13)
+test.err = double(13)
+for(mtry in 1:13){
+  fit = randomForest(medv~., data = Boston, subset=train, mtry=mtry, ntree = 400)
+  oob.err[mtry] = fit$mse[400]
+  pred = predict(fit, Boston[-train,])
+  test.err[mtry]=with(Boston[-train,], mean((medv-pred)^2))
+  cat(mtry, " ")
+}
+matplot(1:mtry, cbind(test.err,oob.err), pch=19, col = c('red', 'blue'), type = 'b', ylab = 'Mean Squared Error')
+legend('topright', legend = c('Test', 'OOB'), pch = 19, col=c('red','blue'))
+```
+
+Ideally, those two curves should line up, pretty much. There's a lot of variability in these test error estimates (their own standard errors, which are typically quite large). Since the out-of-bag was computed on one data set and the test error on a different data set, and they weren't very large, these differences are pretty much well within the standard errors. These error estimates are very correlated, because the randomForest with mtry equals 4 is very similar to the one with mtry equals 5. So that's why these curves, or each of the curves is quite smooth. 
+
+Notice:
+- the points at the beginning are performance of a single tree.
+- the points at the end with `mtry = 13` correspond to bagging. 
+
+Boosting
+--------------
+Boosting builds lots of smaller trees. Unlike random forests, each new tree in boosting tries to patch up the deficiencies of the current ensamble. 
+Random Forests goes after the variance. Instead, boosting goes after the bias. 
+```{r}
+require(gbm)
+# distribution is Gaussian, because we're doing squared error loss. 
+boost.boston = gbm(medv~., data = Boston[train,], distribution = 'gaussian', n.trees = 10000,
+                   shrinkage = 0.01, interaction.depth = 4)
+# variable importance plot
+summary(boost.boston)
+# Partial dependence plots
+plot(boost.boston, i = 'lstat') # higher proportion lower status people, lower the house value
+plot(boost.boston, i = 'rm') # more rooms in the house, higher the price
+```
+
+Lets make a prediction on the test set. With boosting, the number of trees is a tuning parameter, and if we have too many we can overfit. So we should use cross validation to select the number of trees. We will leave this as an exercise. 
+Instead, we will compute the test error as a function of the number of trees, and make a plot. 
+
+```{r}
+n.trees = seq(from=100, to=10000, by = 100)
+predmat = predict(boost.boston, newdata = Boston[-train,], n.trees = n.trees)
+dim(predmat)
+# compute the columnwise mean squared error
+berr=with(Boston[-train,],apply((predmat-medv)^2, 2, mean))
+plot(n.trees, berr, pch=19, ylab='Mean Squared Error', xlab='# Trees', main = 'Boosting Test Error')
+# include the best test error from the randomForest
+abline(h=min(test.err), col='red')
+```
+
+Boosting Test Error graph level off: if the number of trees is too high, it would slowly start to increase. But this is evidence of the claim that boosting is reluctuant to overfit.
+
+The red line represent the best test error from the Random Forest, we can see that is not in the graph since boosting actually got a amount above the test error from the Random Forest. Usually, Boosting outperform Random Foreset (Not in this case) if carefully tweaking and tuning is done properly. 

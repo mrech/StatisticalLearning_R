@@ -23,3 +23,6 @@
 - **Ch7 Non Linearity**
   - KEYWORDS: Polynimial Regression | Step Functions | Piecewise Polynimials | Linear Splines | Cubic Splines | Smoothing Splines | Local Regression | Generalized Additive Models 
   - CODE: *NonlinearFunctions.Rmd*
+- **Ch8 Tree-based Methods**
+  - KEYWORDS: Decision Trees | Pruning a tree | Classification Trees | Bagging | Random Forests | Boosting
+  - CODE: *FittingTrees.Rmd*
