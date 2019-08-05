@@ -1,0 +1,98 @@
+SVM 
+================================================
+Lets generate some data in two dimensions, and make them a little separated.
+
+```{r}
+set.seed(10111)
+x = matrix(rnorm(40),20,2)
+y = rep(c(-1,1), c(10,10))
+x[y==1,] = x[y==1,]+1
+plot(x, col =y+3, pch=19)
+```
+
+Load the package `e1071` which contains the `svm` function we will use.
+Notice we have to specify `cost` parameter, which is a tuning parameter. 
+
+```{r}
+library(e1071)
+dat=data.frame(x, y = as.factor(y))
+svmfit = svm(y~., data = dat, kernel = 'linear', cost = 10, scale = FALSE)
+print(svmfit)
+plot(svmfit, dat) # crude plot
+```
+
+# Create your own plot
+Make a grid of values for X1 and X2 using the handy function `expand.grid`. It produces the coordinates of `n*n` points 
+on a lattice covering the domain of `x`. Having mode the lattice, we make a prediction at each point on the lattice. 
+We then plot the lattice, color-coded according to the classification. Now we can see the decision boundary. 
+
+The support points (points on the margin, or on the wrong side of the margin) are indexed in the `$index` component of the fit. 
+
+```{r}
+make.grid=function(x, n=75){
+  grange = apply(x, 2, range)
+  x1 = seq(from=grange[1,1], to=grange[2,1], length = n)
+  x2 = seq(from=grange[1,2], to=grange[2,2], length = n)
+  expand.grid(X1=x1, X2=x2)
+}
+
+xgrid = make.grid(x)
+ygrid = predict(svmfit, xgrid)
+plot(xgrid, col = c('red', 'blue') [as.numeric(ygrid)], pch=20, cex=.2)
+points(x, col=y+3, pch=19)
+points(x[svmfit$index, ], pch=5, cex=2)
+```
+
+To get the linear coefficients (which makes sense only for linear kernels) we use the following formula.
+We exgtract the linear coefficients, and then using simple algebra, we include the decision boundary and the two margins. 
+```{r}
+beta = drop(t(svmfit$coefs)%*%x[svmfit$index, ])
+beta0=svmfit$rho
+plot(xgrid, col = c('red', 'blue')[as.numeric(ygrid)], pch=20, cex=.2)
+points(x, col=y+3, pch=19)
+points(x[svmfit$index,], pch=5, cex=2)
+abline(beta0/beta[2], -beta[1]/beta[2]) #from b0 + b1x1 + b2x2 = 0
+# upper margin 
+abline((beta0-1)/beta[2], -beta[1]/beta[2], lty = 2)
+# lower margin
+abline((beta0+1)/beta[2], -beta[1]/beta[2], lty = 2)
+
+```
+
+Nonlinear SVM
+-------------
+```{r}
+load(url('https://web.stanford.edu/~hastie/ElemStatLearn/datasets/ESL.mixture.rda'))
+names(ESL.mixture)
+rm(x,y)
+attach(ESL.mixture)
+```
+
+```{r}
+plot(x, col=y+1)
+dat=data.frame(y=factor(y), x)
+fit=svm(factor(y)~.,data=dat, scale=FALSE, kernel='radial', cost = 5)
+```
+Lets create a grid and make prediction on the grid. The grid points for each variable are included on the data frame. 
+```{r}
+xgrid=expand.grid(X1=px1, X2=px2)
+ygrid = predict(fit, xgrid)
+plot(xgrid, col=as.numeric(ygrid), pch=20, cex=.2)
+points(x, col=y+1, pch=19)
+```
+
+Lets procude the actual function estimates at each grid points. We can include the actual decision boundary on the plot by making use of the contour function. The `prob`, which is the true probability of class 1 for these data, at the grid points. 
+If we plot its 0.5 contour, that will give us the _Bayes Decision Boundary_, which is the best one could ever do. 
+
+```{r}
+func = predict(fit, xgrid, decision.values = TRUE)
+func = attributes(func)$decision
+xgrid = expand.grid(X1=px1, X2=px2)
+ygrid = predict(fit, xgrid)
+plot(xgrid, col=as.numeric(ygrid), pch=20, cex=.2)
+points(x, col=y+1, pch=19)
+
+contour(px1, px2, matrix(func, 69, 99), level = 0, add = TRUE) # 69, 99 dimension of px1, px2
+contour(px1, px2, matrix(prob, 69, 99), level =.5, add = TRUE, col ='blue')
+```
+

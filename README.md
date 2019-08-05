@@ -26,3 +26,6 @@
 - **Ch8 Tree-based Methods**
   - KEYWORDS: Decision Trees | Pruning a tree | Classification Trees | Bagging | Random Forests | Boosting
   - CODE: *FittingTrees.Rmd*
+- **Ch9 Support Vector Machines** 
+  - KEYWORDS: Separating Hyperplanes | Maximal Margin Classifier | Non-separable Data | Noisy Data | Support Vector Classifier | Regularization parameter | Cubic Polynomials | Nonlinearities and Kernels
+  - CODE: *svm.Rmd - 9R_ReviewQuestions.R*
