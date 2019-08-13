@@ -1,0 +1,95 @@
+Principal Components
+====================
+
+```{r}
+dimnames(USArrests)
+apply(USArrests, 2, mean)
+apply(USArrests, 2, var)
+```
+
+We see that `Assault` has a much larger variance than the other variables.
+It would dominate the principal components, so we choose to standardize
+the variables when we perform PCA. 
+
+```{r}
+pca.out = prcomp(USArrests, scale = TRUE)
+pca.out # rotation are the loadings
+names(pca.out)
+biplot(pca.out, scale = 0, cex=0.5)
+# negative components by negative loadings >> positive
+# pc1 determine by the three tipes of crimes
+# pc2 determines by the population. 
+```
+
+K-Means Clustering
+==================
+K-means works in any diemension, but is most fun to demonstrate in two, because we can plot pictures.
+Lets make some data with clusters. We do this by shifting the means of the points around. 
+```{r}
+set.seed(101)
+x = matrix(rnorm(100*2), 100,2)
+xmean = matrix(rnorm(8, sd = 4), 4, 2)
+# which observations belong to which cluster
+which = sample(1:4, 100, replace = TRUE)
+x = x + xmean[which, ]
+plot(x, col = which, pch = 19)
+```
+We know the 'true' cluster IDs, but we wont tell that to the `kmeans` algorithm.
+```{r}
+km.out = kmeans(x, 4, nstart = 15)
+km.out
+plot(x, col = km.out$cluster, cex = 2, pch=1, lwd=2)
+points(x, col=which, pch = 19)
+points(x, col=c(1,3,2,4)[which], pch=19)
+```
+
+Hierarchical Clustering
+=======================
+```{r}
+
+hc.complete = hclust(dist(x), method = 'complete')
+plot(hc.complete)
+hc.single = hclust(dist(x), method = 'single')
+plot(hc.single)
+hc.average = hclust(dist(x), method = 'average')
+plot(hc.average)
+
+```
+Lets compare this with the actualy clusters in the data. We will use the function `cutree` to cut the tree
+at level 4. It returns the cluster assigment for each observation.
+```{r}
+hc.cut = cutree(hc.complete, 4)
+table(hc.cut, which)
+table(hc.cut, km.out$cluster)
+```
+
+
+Use our group membership as labels for the leaves of the dendrogram:
+```{r}
+plot(hc.complete, labels = which, cex = 0.6)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
