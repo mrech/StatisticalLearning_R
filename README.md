@@ -29,3 +29,6 @@
 - **Ch9 Support Vector Machines** 
   - KEYWORDS: Separating Hyperplanes | Maximal Margin Classifier | Non-separable Data | Noisy Data | Support Vector Classifier | Regularization parameter | Cubic Polynomials | Nonlinearities and Kernels
   - CODE: *svm.Rmd - 9R_ReviewQuestions.R*
+- **Ch10 Unsupervised Learning**
+  - KEYWORDS: Unsupervised Learning | Principal Components Analysis | Clustering | K-means clustering | Hierarchical clustering 
+  - CODE: *PCA_Clustering.Rmd - 10R_ReviewQuestions.R*
